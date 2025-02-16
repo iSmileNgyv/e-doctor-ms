@@ -12,10 +12,13 @@ import java.util.Map;
 @Service
 public class NotificationServiceFactory {
     private final Map<DeliveryMethod, NotificationService<?, ?>> serviceMap;
-    public NotificationServiceFactory() {
+    public NotificationServiceFactory(
+            EmailNotificationServiceImpl email,
+            SmsNotificationServiceImpl sms
+    ) {
         serviceMap = new HashMap<>();
-        serviceMap.put(DeliveryMethod.EMAIL, new EmailNotificationServiceImpl());
-        serviceMap.put(DeliveryMethod.SMS, new SmsNotificationServiceImpl());
+        serviceMap.put(DeliveryMethod.EMAIL, email);
+        serviceMap.put(DeliveryMethod.SMS, sms);
     }
 
     @SuppressWarnings("unchecked")
