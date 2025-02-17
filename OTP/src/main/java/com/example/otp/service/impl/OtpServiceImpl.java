@@ -40,7 +40,7 @@ public class OtpServiceImpl implements OtpService {
             message.put("userId", user.getId());
             message.put("deliveryMethod", user.getDeliveryMethod());
             message.put("code", Integer.toString(value));
-            kafkaTemplate.send("otp", message);
+            kafkaTemplate.send("otp_" + user.getDeliveryMethod(), message);
         } catch (RedisException exception) {
             throw new CannotCreateOtpException();
         }

@@ -7,7 +7,9 @@ import com.example.notification.repository.UserRepository;
 import com.example.notification.service.NotificationService;
 import com.example.notification.util.enums.DeliveryMethod;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -37,16 +39,22 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
         javaMailSender.send(message);
     }
 
-    @KafkaListener(topics = "otp", groupId = "notification_group")
-    public void listenForNotification(Map<String, Object> message) {
-        EmailNotificationRequestDto request = new EmailNotificationRequestDto();
-        var findUser = userRepository.findByIdAndDeliveryMethod((int) message.get("userId"),DeliveryMethod.fromValue((Integer) message.get("deliveryMethod")));
-        if(findUser.isEmpty())
-            throw new UserNotFoundException();
-        var user = findUser.get();
-        request.setSubject("Your otp code");
-        request.setRecipient(user.getDeliverySetting());
-        request.setMessage(message.get("code").toString());
-        send(request);
+    @KafkaListener(topics = "otp_1", groupId = "notification_group")
+    public void listenForNotification(Map<String, Object> message, Acknowledgment acknowledgment) {
+        try {
+            EmailNotificationRequestDto request = new EmailNotificationRequestDto();
+            var findUser = userRepository.findByIdAndDeliveryMethod((int) message.get("userId"),DeliveryMethod.fromValue((Integer) message.get("deliveryMethod")));
+            if(findUser.isEmpty())
+                throw new UserNotFoundException();
+            var user = findUser.get();
+            request.setSubject("Your otp code");
+            request.setRecipient(user.getDeliverySetting());
+            request.setMessage(message.get("code").toString());
+            send(request);
+            acknowledgment.acknowledge();
+        } catch(Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+
     }
 }
