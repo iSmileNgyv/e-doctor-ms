@@ -1,0 +1,5 @@
+1) Eureka
+https://medium.com/@yunusemrenalbant/netflix-eureka-server-nedir-ne-i%CC%87%C5%9Fe-yarar-7eea5fe4fe4b
+
+2) Zipkin
+https://onurciner.medium.com/zipkin-nedir-zipkin-server%C4%B1-spring-boot-2-x-%C3%BCzerinde-%C3%A7al%C4%B1%C5%9Ft%C4%B1rma-cb18c69597f5

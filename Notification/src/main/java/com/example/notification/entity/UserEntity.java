@@ -15,6 +15,8 @@ public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Column(name = "user_id")
+    private int userId;
     @Column(name = "delivery_method")
     private DeliveryMethod deliveryMethod;
     @Column(name = "delivery_setting", length = 100)

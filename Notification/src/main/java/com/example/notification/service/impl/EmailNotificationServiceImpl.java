@@ -7,7 +7,6 @@ import com.example.notification.repository.UserRepository;
 import com.example.notification.service.NotificationService;
 import com.example.notification.util.enums.DeliveryMethod;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.mail.SimpleMailMessage;
@@ -26,7 +25,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
     public EmailNotificationResponseDto send(EmailNotificationRequestDto request) {
         var response = new EmailNotificationResponseDto();
         response.setRequestId(request.getRequestId());
-        sendEmail(request.getRecipient(), request.getSubject(), request.getMessage());
+        this.sendEmail(request.getRecipient(), request.getSubject(), request.getMessage());
         return response;
     }
 
@@ -40,7 +39,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
     }
 
     @KafkaListener(topics = "otp_1", groupId = "notification_group")
-    public void listenForNotification(Map<String, Object> message, Acknowledgment acknowledgment) {
+    private void listenForNotification(Map<String, Object> message, Acknowledgment acknowledgment) {
         try {
             EmailNotificationRequestDto request = new EmailNotificationRequestDto();
             var findUser = userRepository.findByIdAndDeliveryMethod((int) message.get("userId"),DeliveryMethod.fromValue((Integer) message.get("deliveryMethod")));
@@ -50,7 +49,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
             request.setSubject("Your otp code");
             request.setRecipient(user.getDeliverySetting());
             request.setMessage(message.get("code").toString());
-            send(request);
+            this.send(request);
             acknowledgment.acknowledge();
         } catch(Exception ex) {
             System.out.println(ex.getMessage());

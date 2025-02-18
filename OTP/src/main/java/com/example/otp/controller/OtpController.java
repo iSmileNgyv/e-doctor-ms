@@ -5,10 +5,8 @@ import com.example.otp.dto.ResponseDto;
 import com.example.otp.dto.verify.VerifyRequestDto;
 import com.example.otp.service.OtpService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("api/v1/otp")
