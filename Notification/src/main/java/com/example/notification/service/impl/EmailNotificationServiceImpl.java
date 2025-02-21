@@ -42,7 +42,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
     private void listenForNotification(Map<String, Object> message, Acknowledgment acknowledgment) {
         try {
             EmailNotificationRequestDto request = new EmailNotificationRequestDto();
-            var findUser = userRepository.findByIdAndDeliveryMethod((int) message.get("userId"),DeliveryMethod.fromValue((Integer) message.get("deliveryMethod")));
+            var findUser = userRepository.findByUserIdAndDeliveryMethod((int) message.get("userId"),DeliveryMethod.fromValue((Integer) message.get("deliveryMethod")));
             if(findUser.isEmpty())
                 throw new UserNotFoundException();
             var user = findUser.get();
