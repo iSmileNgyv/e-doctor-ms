@@ -13,6 +13,6 @@ public class RoleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
-    //@ManyToMany(mappedBy = "roles")
-    //private Collection<UserEntity> users;
+    @ManyToMany(mappedBy = "roles")
+    private Collection<UserEntity> users;
 }

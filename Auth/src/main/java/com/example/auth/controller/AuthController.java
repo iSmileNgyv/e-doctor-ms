@@ -1,10 +1,14 @@
 package com.example.auth.controller;
 
-import com.example.auth.dto.LoginRequestDto;
-import com.example.auth.dto.LoginRequestResponseDto;
+import com.example.auth.dto.auth.AuthRequestDto;
+import com.example.auth.dto.auth.AuthResponseDto;
+import com.example.auth.dto.login.LoginRequestDto;
+import com.example.auth.dto.login.LoginResponseDto;
+import com.example.auth.dto.register.RegisterRequestDto;
+import com.example.auth.dto.register.RegisterResponseDto;
+import com.example.auth.service.AuthService;
 import com.example.auth.util.TokenManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,12 +22,23 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final TokenManager tokenManager;
+    private final AuthService authService;
 
     @PostMapping("login")
-    public LoginRequestResponseDto login(@RequestBody LoginRequestDto request) {
+    public LoginResponseDto login(@RequestBody LoginRequestDto request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
-        return new LoginRequestResponseDto(tokenManager.generateToken(request.getUsername()));
+        return new LoginResponseDto(tokenManager.generateToken(request.getUsername()));
+    }
+
+    @PostMapping("register")
+    public RegisterResponseDto register(@RequestBody RegisterRequestDto request) {
+        return authService.register(request);
+    }
+
+    @PostMapping
+    public AuthResponseDto auth(@RequestBody AuthRequestDto request) {
+        return authService.validateToken(request.getToken());
     }
 }

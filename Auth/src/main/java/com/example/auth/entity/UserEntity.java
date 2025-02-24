@@ -17,8 +17,8 @@ public class UserEntity {
     private long id;
     private String username;
     private String password;
-    //@ManyToMany(fetch = FetchType.EAGER)
-    //private Collection<RoleEntity> roles;
+    @ManyToMany
+    private Collection<RoleEntity> roles;
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
