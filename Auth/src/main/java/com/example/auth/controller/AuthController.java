@@ -1,7 +1,5 @@
 package com.example.auth.controller;
 
-import com.example.auth.dto.auth.AuthRequestDto;
-import com.example.auth.dto.auth.AuthResponseDto;
 import com.example.auth.dto.login.LoginRequestDto;
 import com.example.auth.dto.login.LoginResponseDto;
 import com.example.auth.dto.register.RegisterRequestDto;
@@ -37,8 +35,8 @@ public class AuthController {
         return authService.register(request);
     }
 
-    @PostMapping
-    public AuthResponseDto auth(@RequestBody AuthRequestDto request) {
-        return authService.validateToken(request.getToken());
-    }
+//    @PostMapping
+//    public AuthResponseDto auth(@RequestBody AuthRequestDto request) {
+//        //return authService.validateToken(request.getToken());
+//    }
 }

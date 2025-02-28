@@ -6,5 +6,6 @@ import com.example.auth.dto.register.RegisterResponseDto;
 
 public interface AuthService {
     RegisterResponseDto register(RegisterRequestDto request);
-    AuthResponseDto validateToken(String token);
+    //AuthResponseDto validateToken(String token);
+
 }

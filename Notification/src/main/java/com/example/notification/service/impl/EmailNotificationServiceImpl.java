@@ -39,7 +39,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
     }
 
     @KafkaListener(topics = "otp_1", groupId = "notification_group")
-    private void listenForNotification(Map<String, Object> message, Acknowledgment acknowledgment) {
+    private void listenForOtpNotification(Map<String, Object> message, Acknowledgment acknowledgment) {
         try {
             EmailNotificationRequestDto request = new EmailNotificationRequestDto();
             var findUser = userRepository.findByUserIdAndDeliveryMethod((int) message.get("userId"),DeliveryMethod.fromValue((Integer) message.get("deliveryMethod")));

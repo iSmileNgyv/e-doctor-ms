@@ -1,5 +1,8 @@
 package com.example.auth.util;
 
+import com.example.auth.exception.auth.UnAuthrorizedException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
@@ -21,25 +24,58 @@ public class TokenManager {
                 .compact();
     }
     public boolean tokenValidate(String token) {
-        return getUsernameToken(token) != null && isExpired(token);
+        try {
+            return getUsernameToken(token) != null && isExpired(token);
+        } catch(JwtException e) {
+            throw new UnAuthrorizedException();
+        }
+
     }
 
     public String getUsernameToken(String token) {
-        return Jwts.parser()
-                .verifyWith(SECRET_KEY)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        try {
+            return Jwts.parser()
+                    .verifyWith(SECRET_KEY)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch(ExpiredJwtException e) {
+            throw new UnAuthrorizedException("Token expired");
+        } catch(JwtException e) {
+            throw new UnAuthrorizedException("Token invalid");
+        }
+    }
+
+    public long getExpiredAt(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(SECRET_KEY)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getExpiration()
+                    .getTime();
+        } catch(ExpiredJwtException e) {
+            throw new UnAuthrorizedException("Token expired");
+        } catch(JwtException e) {
+            throw new UnAuthrorizedException("Invalid token");
+        }
     }
 
     public boolean isExpired(String token) {
-        return Jwts.parser()
-                .verifyWith(SECRET_KEY)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getExpiration()
-                .before(new Date(System.currentTimeMillis()));
+        try {
+            return Jwts.parser()
+                    .verifyWith(SECRET_KEY)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getExpiration()
+                    .before(new Date(System.currentTimeMillis()));
+        } catch(ExpiredJwtException e) {
+            throw new UnAuthrorizedException("Token expired");
+        } catch(JwtException e) {
+            throw new UnAuthrorizedException("Invalid token");
+        }
     }
 }

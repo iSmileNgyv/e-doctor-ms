@@ -1,4 +1,4 @@
-package com.example.auth.dto.auth;
+package com.example.edoctor.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AuthResponseDto {
+public class AuthResponseDTO {
     private String username;
     private long expiredAt;
 }
