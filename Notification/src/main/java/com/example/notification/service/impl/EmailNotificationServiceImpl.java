@@ -47,7 +47,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
                 throw new UserNotFoundException();
             var user = findUser.get();
             request.setSubject("Your otp code");
-            request.setRecipient(user.getDeliverySetting());
+            request.setRecipient(user.getRecipient());
             request.setMessage(message.get("code").toString());
             this.send(request);
             acknowledgment.acknowledge();

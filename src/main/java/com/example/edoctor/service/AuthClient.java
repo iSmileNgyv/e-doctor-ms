@@ -12,7 +12,6 @@ public class AuthClient {
     private AuthServiceGrpc.AuthServiceBlockingStub authServiceBlockingStub;
 
     public AuthResponseDto authenticate(String token) {
-        System.out.println("AuthClient.authenticate " + token);
         return this.authServiceBlockingStub.auth(AuthRequestDto.newBuilder()
                 .setToken(token)
                 .build()

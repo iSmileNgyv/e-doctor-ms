@@ -1,6 +1,6 @@
 package com.example.auth.util;
 
-import com.example.auth.exception.auth.UnAuthrorizedException;
+import com.example.auth.exception.auth.UnauthorizedException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -27,9 +27,8 @@ public class TokenManager {
         try {
             return getUsernameToken(token) != null && isExpired(token);
         } catch(JwtException e) {
-            throw new UnAuthrorizedException();
+            throw new UnauthorizedException();
         }
-
     }
 
     public String getUsernameToken(String token) {
@@ -41,9 +40,9 @@ public class TokenManager {
                     .getPayload()
                     .getSubject();
         } catch(ExpiredJwtException e) {
-            throw new UnAuthrorizedException("Token expired");
+            throw new UnauthorizedException("Token expired");
         } catch(JwtException e) {
-            throw new UnAuthrorizedException("Token invalid");
+            throw new UnauthorizedException("Token invalid");
         }
     }
 
@@ -57,9 +56,9 @@ public class TokenManager {
                     .getExpiration()
                     .getTime();
         } catch(ExpiredJwtException e) {
-            throw new UnAuthrorizedException("Token expired");
+            throw new UnauthorizedException("Token expired");
         } catch(JwtException e) {
-            throw new UnAuthrorizedException("Invalid token");
+            throw new UnauthorizedException("Invalid token");
         }
     }
 
@@ -73,9 +72,10 @@ public class TokenManager {
                     .getExpiration()
                     .before(new Date(System.currentTimeMillis()));
         } catch(ExpiredJwtException e) {
-            throw new UnAuthrorizedException("Token expired");
+            //throw new UnauthorizedException("Token expired");
+            return true;
         } catch(JwtException e) {
-            throw new UnAuthrorizedException("Invalid token");
+            throw new UnauthorizedException("Invalid token");
         }
     }
 }

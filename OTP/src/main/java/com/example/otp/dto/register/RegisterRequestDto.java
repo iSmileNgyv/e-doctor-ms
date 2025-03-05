@@ -1,6 +1,6 @@
-package com.example.otp.dto;
+package com.example.otp.dto.register;
 
-import com.example.otp.util.enums.OperationType;
+import com.example.otp.DeliveryMethod;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RequestDto {
+public class RegisterRequestDto {
     private long userId;
-    private OperationType operationType;
+    private DeliveryMethod deliveryMethod;
 }

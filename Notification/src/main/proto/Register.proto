@@ -1,0 +1,36 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "com.example.notification";
+
+service RegisterMultiService {
+  rpc registerMulti(stream RegisterMultiRequestDto) returns (RegisterResponseDto);
+}
+
+enum DeliveryMethod {
+  SMS = 0;
+  EMAIL = 1;
+}
+
+message RegisterMultiRequestDto {
+  oneof request_type {
+    RegisterNotificationRequestDto notificationRequest = 2;
+  }
+}
+
+message RegisterNotificationRequestDto {
+  DeliveryMethod deliveryMethod = 1;
+  int64 userId = 2;
+  string recipient = 3;
+}
+
+message RegisterResponseDto {
+  bool success = 1;
+  string message = 2;
+  repeated RequestResult results = 3;
+}
+
+message RequestResult {
+  int64 userId = 1;
+  bool success = 2;
+  string message = 3;
+}

@@ -2,7 +2,7 @@ package com.example.edoctor.service;
 
 
 import com.example.edoctor.dto.auth.AuthResponseDTO;
-import com.example.edoctor.exception.auth.UnAuthrorizedException;
+import com.example.edoctor.exception.auth.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +18,7 @@ public class AuthService {
             response.setExpiredAt(authResponse.getExpiredAt());
             return response;
         } catch (Exception e) {
-            throw new UnAuthrorizedException();
+            throw new UnauthorizedException("Unauthorized " + e.getMessage());
         }
 
     }

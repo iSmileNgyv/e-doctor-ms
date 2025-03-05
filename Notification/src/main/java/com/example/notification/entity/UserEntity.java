@@ -16,11 +16,11 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @Column(name = "user_id")
-    private int userId;
+    private long userId;
     @Column(name = "delivery_method")
     private DeliveryMethod deliveryMethod;
-    @Column(name = "delivery_setting", length = 100)
-    private String deliverySetting;
+    @Column(length = 100)
+    private String recipient;
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;

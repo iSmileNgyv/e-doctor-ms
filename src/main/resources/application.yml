@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/v1/auth/**
+
+grpc:
+  client:
+    authService:
+      address: static://localhost:9090
+      negotiationType: PLAINTEXT
+
+logging:
+  level:
+    root: INFO

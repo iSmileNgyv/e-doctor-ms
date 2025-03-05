@@ -1,11 +1,10 @@
 package com.example.otp.controller;
 
 import com.example.otp.dto.RequestDto;
-import com.example.otp.dto.ResponseDto;
 import com.example.otp.dto.verify.VerifyRequestDto;
 import com.example.otp.service.OtpService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,13 +14,15 @@ public class OtpController {
     private final OtpService otpService;
 
     @PostMapping
-    public ResponseDto createOtp(@RequestBody RequestDto request) {
-        return otpService.createOtpCode(request);
+    public ResponseEntity<Void> createOtp(@RequestBody RequestDto request, @RequestHeader("User-Agent") String userAgent) {
+        otpService.createOtpCode(request, userAgent);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("verify")
-    public ResponseDto verifyOtp(@RequestBody VerifyRequestDto request) {
-        return otpService.verifyOtpCode(request);
+    public ResponseEntity<Void> verifyOtp(@RequestBody VerifyRequestDto request, @RequestHeader("User-Agent") String userAgent) {
+        otpService.verifyOtpCode(request, userAgent);
+        return ResponseEntity.ok().build();
     }
 
 }

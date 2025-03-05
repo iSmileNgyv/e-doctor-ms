@@ -17,6 +17,8 @@ public class UserEntity {
     private int id;
     @Column(name = "delivery_method")
     private DeliveryMethod deliveryMethod;
+    @Column(name = "user_id")
+    private long userId;
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;

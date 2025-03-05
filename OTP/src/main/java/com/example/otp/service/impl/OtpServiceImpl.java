@@ -1,9 +1,11 @@
 package com.example.otp.service.impl;
 
 import com.example.otp.dto.RequestDto;
-import com.example.otp.dto.ResponseDto;
+import com.example.otp.dto.register.RegisterRequestDto;
 import com.example.otp.dto.verify.VerifyRequestDto;
+import com.example.otp.entity.UserEntity;
 import com.example.otp.exception.otp.CannotCreateOtpException;
+import com.example.otp.exception.otp.UserIsExistException;
 import com.example.otp.exception.otp.UserNotFoundException;
 import com.example.otp.exception.otp.WrongOtpException;
 import com.example.otp.repository.UserRepository;
@@ -13,7 +15,6 @@ import io.lettuce.core.RedisException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -27,13 +28,13 @@ public class OtpServiceImpl implements OtpService {
     private final UserRepository userRepository;
     private final StringRedisTemplate stringRedisTemplate;
     private final KafkaTemplate<String, Map<String, Object>> kafkaTemplate;
-    public ResponseDto createOtpCode(RequestDto request) {
-        String key = request.getUserId() + "_" + request.getOperationType() + "_" + request.getRequestId();
+    public void createOtpCode(RequestDto request, String userAgent) {
+        String key = request.getUserId() + "_" + request.getOperationType() + "_" + userAgent;
         Random random = new Random();
         int value = random.nextInt(100000);
         try {
             stringRedisTemplate.opsForValue().set(key, Integer.toString(value), Duration.ofMinutes(5));
-            var userRepositoryById = userRepository.findById(request.getUserId());
+            var userRepositoryById = userRepository.findByUserId(request.getUserId());
             if(userRepositoryById.isEmpty())
                 throw new UserNotFoundException();
             var user = userRepositoryById.get();
@@ -45,12 +46,11 @@ public class OtpServiceImpl implements OtpService {
         } catch (RedisException exception) {
             throw new CannotCreateOtpException();
         }
-        return new ResponseDto(request.getRequestId());
     }
 
     @Override
-    public ResponseDto verifyOtpCode(VerifyRequestDto request) {
-        String key = request.getUserId() + "_" + request.getOperationType() + "_" + request.getRequestId();
+    public void verifyOtpCode(VerifyRequestDto request, String userAgent) {
+        String key = request.getUserId() + "_" + request.getOperationType() + "_" + userAgent;
         String value = request.getOtpCode();
         if(!stringRedisTemplate.hasKey(key) || stringRedisTemplate.opsForValue().get(key)== null) {
             throw new CannotCreateOtpException();
@@ -59,6 +59,16 @@ public class OtpServiceImpl implements OtpService {
         if(!value.equals(storedValue)) {
             throw new WrongOtpException();
         }
-        return new ResponseDto(request.getRequestId());
+    }
+
+    @Override
+    public void register(RegisterRequestDto request) {
+        var user = userRepository.findByUserId(request.getUserId());
+        if(user.isPresent())
+            throw new UserIsExistException();
+        var userEntity = new UserEntity();
+        userEntity.setUserId(request.getUserId());
+        userEntity.setDeliveryMethod(DeliveryMethod.valueOf(request.getDeliveryMethod().name()));
+        userRepository.save(userEntity);
     }
 }

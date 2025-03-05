@@ -1,0 +1,49 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "com.example.auth";
+
+service RegisterMultiService {
+  // Birden fazla isteği stream olarak al, tek bir response dön
+  rpc registerMulti(stream RegisterMultiRequestDto) returns (RegisterResponseDto);
+}
+
+message RegisterMultiRequestDto {
+  oneof request_type {
+    RegisterOtpRequestDto otpRequest = 1;
+    RegisterNotificationRequestDto notificationRequest = 2;
+  }
+}
+
+message RegisterOtpRequestDto {
+  DeliveryMethod deliveryMethod = 1;
+  int64 userId = 2;
+  string userAgent = 3;
+}
+
+message RegisterNotificationRequestDto {
+  DeliveryMethod deliveryMethod = 1;
+  int64 userId = 2;
+  string recipient = 3;
+}
+
+message RegisterResponseDto {
+  bool success = 1;
+  string message = 2;
+  repeated RequestResult results = 3; // Her bir isteğin sonucunu içerecek
+}
+
+// Her bir isteğin sonucunu detaylandıran mesaj
+message RequestResult {
+  enum RequestType {
+    OTP = 0;
+    NOTIFICATION = 1;
+  }
+  RequestType type = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+enum DeliveryMethod {
+  SMS = 0;
+  EMAIL = 1;
+}

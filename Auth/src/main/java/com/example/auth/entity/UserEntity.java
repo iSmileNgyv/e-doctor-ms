@@ -17,7 +17,11 @@ public class UserEntity {
     private long id;
     private String username;
     private String password;
-    @ManyToMany
+    @Column(name = "login_otp", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean loginOtp;
+    @Column(name = "is_active", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean isActive;
+    @ManyToMany(fetch = FetchType.EAGER)
     private Collection<RoleEntity> roles;
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)

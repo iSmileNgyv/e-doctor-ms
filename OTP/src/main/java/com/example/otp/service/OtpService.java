@@ -1,10 +1,11 @@
 package com.example.otp.service;
 
 import com.example.otp.dto.RequestDto;
-import com.example.otp.dto.ResponseDto;
+import com.example.otp.dto.register.RegisterRequestDto;
 import com.example.otp.dto.verify.VerifyRequestDto;
 
 public interface OtpService {
-    ResponseDto createOtpCode(RequestDto request);
-    ResponseDto verifyOtpCode(VerifyRequestDto request);
+    void createOtpCode(RequestDto request, String userAgent);
+    void verifyOtpCode(VerifyRequestDto request, String userAgent);
+    void register(RegisterRequestDto request);
 }

@@ -4,12 +4,12 @@ package com.example.edoctor.exception.auth;
 import com.example.edoctor.exception.BaseException;
 import org.springframework.http.HttpStatus;
 
-public class UnAuthrorizedException extends BaseException {
-    public UnAuthrorizedException() {
+public class UnauthorizedException extends BaseException {
+    public UnauthorizedException() {
         super("Unauthorized", HttpStatus.UNAUTHORIZED.value());
     }
 
-    public UnAuthrorizedException(String message) {
+    public UnauthorizedException(String message) {
         super(message, HttpStatus.UNAUTHORIZED.value());
     }
 }
