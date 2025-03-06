@@ -46,7 +46,6 @@ public class NotificationGrpcServiceImpl extends RegisterMultiServiceGrpc.Regist
                         userEntity.setDeliveryMethod(DeliveryMethod.valueOf(notificationRequest.getDeliveryMethod().name()));
                         userEntity.setRecipient(notificationRequest.getRecipient());
                         userRepository.save(userEntity);
-                        System.out.println("Notification request: " + notificationRequest);
                         results.add(
                                 RequestResult.newBuilder()
                                         .setUserId(notificationRequest.getUserId())
@@ -86,73 +85,4 @@ public class NotificationGrpcServiceImpl extends RegisterMultiServiceGrpc.Regist
             }
         };
     }
-    /*@Override
-    public StreamObserver<RegisterNotificationRequestDto> registerMulti(StreamObserver<RegisterResponseDto> responseObserver) {
-        List<RequestResult> results = new ArrayList<>();
-
-        return new StreamObserver<RegisterNotificationRequestDto>() {
-            @Override
-            public void onNext(RegisterNotificationRequestDto request) {
-                try {
-                    var user = userRepository.findByUserIdAndDeliveryMethod(
-                            request.getUserId(),
-                            DeliveryMethod.valueOf(request.getDeliveryMethod().name())
-                    );
-
-                    if (user.isPresent()) {
-                        results.add(
-                                RequestResult.newBuilder()
-                                        .setUserId(request.getUserId())
-                                        .setSuccess(false)
-                                        .setMessage("User already exists")
-                                        .build()
-                        );
-                        return;
-                    }
-
-                    var userEntity = new UserEntity();
-                    userEntity.setUserId(request.getUserId());
-                    userEntity.setDeliveryMethod(DeliveryMethod.valueOf(request.getDeliveryMethod().name()));
-                    userEntity.setRecipient(request.getRecipient());
-                    userRepository.save(userEntity);
-                    System.out.println("Notification request " + request);
-                    results.add(
-                            RequestResult.newBuilder()
-                                    .setUserId(request.getUserId())
-                                    .setSuccess(true)
-                                    .setMessage("Notification registration successful")
-                                    .build()
-                    );
-
-                } catch (Exception e) {
-                    results.add(
-                            RequestResult.newBuilder()
-                                    .setUserId(request.getUserId())
-                                    .setSuccess(false)
-                                    .setMessage("Error: " + e.getMessage())
-                                    .build()
-                    );
-                }
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                responseObserver.onError(t);
-            }
-
-            @Override
-            public void onCompleted() {
-                // Tüm istekler tamamlandığında genel response'u gönder
-                RegisterResponseDto response = RegisterResponseDto.newBuilder()
-                        .setSuccess(results.stream().allMatch(RequestResult::getSuccess))
-                        .setMessage("Notification registrations processed")
-                        .addAllResults(results)
-                        .build();
-
-                responseObserver.onNext(response);
-                responseObserver.onCompleted();
-            }
-        };
-    }
-    */
 }

@@ -14,19 +14,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
-    private final HttpServletRequest httpServletRequest;
+    //private final HttpServletRequest httpServletRequest;
     private final TokenManager tokenManager;
     private final UserDetailsService userDetailsService;
 
     public JwtTokenFilter(
-            HttpServletRequest httpServletRequest,
+            //HttpServletRequest httpServletRequest,
             TokenManager tokenManager, UserDetailsService userDetailsService
     ) {
-        this.httpServletRequest = httpServletRequest;
+        //this.httpServletRequest = httpServletRequest;
         this.tokenManager = tokenManager;
         this.userDetailsService = userDetailsService;
     }

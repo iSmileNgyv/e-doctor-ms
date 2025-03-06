@@ -3,7 +3,6 @@ option java_multiple_files = true;
 option java_package = "com.example.auth";
 
 service RegisterMultiService {
-  // Birden fazla isteği stream olarak al, tek bir response dön
   rpc registerMulti(stream RegisterMultiRequestDto) returns (RegisterResponseDto);
 }
 
@@ -29,10 +28,9 @@ message RegisterNotificationRequestDto {
 message RegisterResponseDto {
   bool success = 1;
   string message = 2;
-  repeated RequestResult results = 3; // Her bir isteğin sonucunu içerecek
+  repeated RequestResult results = 3;
 }
 
-// Her bir isteğin sonucunu detaylandıran mesaj
 message RequestResult {
   enum RequestType {
     OTP = 0;

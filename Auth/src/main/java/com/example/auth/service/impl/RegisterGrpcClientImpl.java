@@ -7,6 +7,7 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -21,12 +22,29 @@ public class RegisterGrpcClientImpl {
     public CompletableFuture<RegisterResponseDto> registerMulti(Long userId, String email, String userAgent) {
         CompletableFuture<RegisterResponseDto> future = new CompletableFuture<>();
         System.out.println("grpc " + userId + " " + email + " " + userAgent);
-        // OTP isteği için StreamObserver
-        StreamObserver<RegisterResponseDto> otpResponseObserver = new StreamObserver<>() {
+
+        RegisterResponseDto.Builder responseBuilder = RegisterResponseDto.newBuilder();
+        AtomicInteger completedCalls = new AtomicInteger(0);
+
+        StreamObserver<RegisterResponseDto> responseObserver = createResponseObserver(future, responseBuilder, completedCalls);
+
+        sendOtpRequest(userId, userAgent, responseObserver);
+
+        sendNotificationRequest(userId, email, responseObserver);
+
+        return future;
+    }
+
+    private StreamObserver<RegisterResponseDto> createResponseObserver(
+            CompletableFuture<RegisterResponseDto> future,
+            RegisterResponseDto.Builder responseBuilder,
+            AtomicInteger completedCalls) {
+        return new StreamObserver<>() {
             @Override
             public void onNext(RegisterResponseDto response) {
-                // OTP yanıtını işle
-                System.out.println("OTP Response: " + response);
+                synchronized (responseBuilder) {
+                    responseBuilder.addAllResults(response.getResultsList());
+                }
             }
 
             @Override
@@ -36,34 +54,17 @@ public class RegisterGrpcClientImpl {
 
             @Override
             public void onCompleted() {
-                // OTP isteği tamamlandı
-                System.out.println("OTP Request Completed");
+                if (completedCalls.incrementAndGet() == 2) { // Wait for both calls to complete
+                    responseBuilder.setSuccess(true);
+                    responseBuilder.setMessage("All processes completed");
+                    future.complete(responseBuilder.build());
+                }
             }
         };
+    }
 
-        // Notification isteği için StreamObserver
-        StreamObserver<RegisterResponseDto> notificationResponseObserver = new StreamObserver<>() {
-            @Override
-            public void onNext(RegisterResponseDto response) {
-                // Notification yanıtını işle
-                System.out.println("Notification Response: " + response);
-                future.complete(response); // İşlemi tamamla
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                future.completeExceptionally(t);
-            }
-
-            @Override
-            public void onCompleted() {
-                // Notification isteği tamamlandı
-                System.out.println("Notification Request Completed");
-            }
-        };
-
-        // OTP isteğini gönder
-        StreamObserver<RegisterMultiRequestDto> otpRequestObserver = otpServiceStub.registerMulti(otpResponseObserver);
+    private void sendOtpRequest(Long userId, String userAgent, StreamObserver<RegisterResponseDto> responseObserver) {
+        StreamObserver<RegisterMultiRequestDto> otpRequestObserver = otpServiceStub.registerMulti(responseObserver);
         otpRequestObserver.onNext(
                 RegisterMultiRequestDto.newBuilder()
                         .setOtpRequest(
@@ -76,9 +77,10 @@ public class RegisterGrpcClientImpl {
                         .build()
         );
         otpRequestObserver.onCompleted();
+    }
 
-        // Notification isteğini gönder
-        StreamObserver<RegisterMultiRequestDto> notificationRequestObserver = notificationServiceStub.registerMulti(notificationResponseObserver);
+    private void sendNotificationRequest(Long userId, String email, StreamObserver<RegisterResponseDto> responseObserver) {
+        StreamObserver<RegisterMultiRequestDto> notificationRequestObserver = notificationServiceStub.registerMulti(responseObserver);
         notificationRequestObserver.onNext(
                 RegisterMultiRequestDto.newBuilder()
                         .setNotificationRequest(
@@ -91,7 +93,5 @@ public class RegisterGrpcClientImpl {
                         .build()
         );
         notificationRequestObserver.onCompleted();
-
-        return future;
     }
 }
