@@ -5,8 +5,10 @@ import com.example.otp.RegisterMultiRequestDto;
 import com.example.otp.RegisterOtpRequestDto;
 import com.example.otp.RegisterResponseDto;
 import com.example.otp.RequestResult;
+import com.example.otp.dto.RequestDto;
 import com.example.otp.dto.register.RegisterRequestDto;
 import com.example.otp.service.OtpService;
+import com.example.otp.util.enums.OperationType;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
@@ -33,7 +35,12 @@ public class RegisterGrpcServerImpl extends RegisterMultiServiceGrpc.RegisterMul
                                 otpRequest.getUserId(),
                                 otpRequest.getDeliveryMethod()
                         ));
-                        System.out.println("OTP saved successfully");
+                        System.out.println("OTP saved successfully " + otpRequest.getUserId());
+
+                        otpService.createOtpCode(new RequestDto(
+                                otpRequest.getUserId(),
+                                OperationType.REGISTER
+                        ), otpRequest.getUserAgent());
                         results.add(
                                 RequestResult.newBuilder()
                                         .setUserId(otpRequest.getUserId())

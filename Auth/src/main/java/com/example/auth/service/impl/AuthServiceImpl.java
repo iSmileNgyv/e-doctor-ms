@@ -1,6 +1,5 @@
 package com.example.auth.service.impl;
 
-import com.example.auth.RegisterOtpRequestDto;
 import com.example.auth.dto.login.LoginRequestDto;
 import com.example.auth.dto.login.LoginResponseDto;
 import com.example.auth.dto.otp.OtpRequestDto;
@@ -16,11 +15,13 @@ import com.example.auth.exception.user.UsernameAlreadyExistException;
 import com.example.auth.repository.RoleRepository;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.service.AuthService;
+import com.example.auth.service.MessageService;
 import com.example.auth.util.TokenManager;
 import com.example.auth.util.enums.OperationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -38,6 +39,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final WebClient webClient;
     private final RegisterGrpcClientImpl registerGrpcClient;
+    private final MessageService messageService;
 
     @Override
     public void register(RegisterRequestDto request, String userAgent) {
@@ -49,6 +51,7 @@ public class AuthServiceImpl implements AuthService {
         UserEntity userEntity = new UserEntity();
         userEntity.setUsername(request.getUsername());
         userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
+        userEntity.setActive(false); // need to verify otp
 
         Collection<RoleEntity> roleEntities = new ArrayList<>();
         // need field default role (USER)
@@ -69,11 +72,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponseDto login(LoginRequestDto request, String requestId) {
         var userEntity = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(UnauthorizedException::new);
+                .orElseThrow(
+                        () -> new UnauthorizedException(messageService.getMessage("UNAUTHORIZED", "az"))
+                );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+            );
+        } catch (AuthenticationException e) {
+            throw new UserNotFound(messageService.getMessage("EMAIL_PASSWORD_WRONG", "az"));
+        }
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-        );
 
         if(userEntity.isLoginOtp()) {
             var otpRequest = new OtpRequestDto(

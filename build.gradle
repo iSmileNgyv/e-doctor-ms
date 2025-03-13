@@ -40,6 +40,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'io.micrometer:micrometer-core:1.15.0-M2'
     implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:1.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     testImplementation 'io.projectreactor:reactor-test'
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'

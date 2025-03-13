@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 import java.util.stream.Collectors;
 import java.util.List;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class UserDetailsService implements org.springframework.security.core.userdetails.UserDetailsService {
     private final UserRepository userRepository;
     @Override

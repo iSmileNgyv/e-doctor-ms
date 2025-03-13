@@ -29,6 +29,7 @@ public class NotificationGrpcServiceImpl extends RegisterMultiServiceGrpc.Regist
                                 notificationRequest.getUserId(),
                                 DeliveryMethod.valueOf(notificationRequest.getDeliveryMethod().name())
                         );
+                        System.out.println("Notification user saved " + System.currentTimeMillis());
 
                         if (user.isPresent()) {
                             results.add(

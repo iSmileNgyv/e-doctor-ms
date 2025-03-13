@@ -39,7 +39,7 @@ public class OtpServiceImpl implements OtpService {
                 throw new UserNotFoundException();
             var user = userRepositoryById.get();
             Map<String, Object> message = new HashMap<>();
-            message.put("userId", user.getId());
+            message.put("userId", user.getUserId());
             message.put("deliveryMethod", user.getDeliveryMethod());
             message.put("code", Integer.toString(value));
             kafkaTemplate.send("otp_" + user.getDeliveryMethod(), message);

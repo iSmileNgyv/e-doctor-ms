@@ -17,15 +17,12 @@ import java.io.IOException;
 
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
-    //private final HttpServletRequest httpServletRequest;
     private final TokenManager tokenManager;
     private final UserDetailsService userDetailsService;
 
     public JwtTokenFilter(
-            //HttpServletRequest httpServletRequest,
             TokenManager tokenManager, UserDetailsService userDetailsService
     ) {
-        //this.httpServletRequest = httpServletRequest;
         this.tokenManager = tokenManager;
         this.userDetailsService = userDetailsService;
     }
