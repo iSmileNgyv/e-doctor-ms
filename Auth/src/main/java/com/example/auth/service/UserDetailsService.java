@@ -23,7 +23,7 @@ public class UserDetailsService implements org.springframework.security.core.use
             throw new UsernameNotFoundException("Username not found");
         var user = repository.get();
         List<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(role -> new SimpleGrantedAuthority(role.getCode()))
                 .collect(Collectors.toList());
         return new User(user.getUsername(), user.getPassword(), authorities);
     }

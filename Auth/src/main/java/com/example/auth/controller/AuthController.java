@@ -16,8 +16,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("login")
-    public LoginResponseDto login(@RequestBody LoginRequestDto request, @RequestHeader("X-Request-Id") String requestId) {
-        return authService.login(request, requestId);
+    public LoginResponseDto login(@RequestBody LoginRequestDto request, @RequestHeader("User-Agent") String userAgent) {
+        return authService.login(request, userAgent);
     }
 
     @PostMapping("register")
@@ -27,13 +27,13 @@ public class AuthController {
     }
 
     @PostMapping("verify-login-otp")
-    public LoginResponseDto verifyLoginOtp(@RequestBody VerifyOtpRequestDto request) {
-        return authService.verifyLoginOtp(request);
+    public LoginResponseDto verifyLoginOtp(@RequestBody VerifyOtpRequestDto request, @RequestHeader("User-Agent") String userAgent) {
+        return authService.verifyLoginOtp(request, userAgent);
     }
 
     @PostMapping("verify-register-otp")
-    public ResponseEntity<Void> verifyRegisterOtp(@RequestBody VerifyOtpRequestDto request) {
-        authService.verifyRegisterOtp(request);
+    public ResponseEntity<Void> verifyRegisterOtp(@RequestBody VerifyOtpRequestDto request, @RequestHeader("User-Agent") String userAgent) {
+        authService.verifyRegisterOtp(request, userAgent);
         return ResponseEntity.ok().build();
     }
 }

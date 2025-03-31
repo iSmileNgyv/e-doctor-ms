@@ -1,0 +1,36 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "com.example.auth";
+
+service OtpService {
+  rpc createOtp(CreateOtpRequestDto) returns (CreateOtpResponseDto);
+  rpc verifyOtp(VerifyOtpRequestDto) returns (VerifyOtpResponseDto);
+}
+
+enum OperationType {
+  LOGIN = 0;
+  FORGOT_PASSWORD = 1;
+  REGISTER = 2;
+}
+
+message CreateOtpRequestDto {
+  int64 userId = 1;
+  OperationType operationType = 2;
+  string userAgent = 3;
+}
+
+message CreateOtpResponseDto {
+  bool success = 1;
+  string message = 2;
+}
+
+message VerifyOtpRequestDto {
+  int64 userId = 1;
+  string otpCode = 2;
+  OperationType operationType = 3;
+  string userAgent = 4;
+}
+
+message VerifyOtpResponseDto {
+  bool success = 1;
+}

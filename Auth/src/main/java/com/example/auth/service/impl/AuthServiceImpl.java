@@ -1,9 +1,8 @@
 package com.example.auth.service.impl;
 
+import com.example.auth.CreateOtpRequestDto;
 import com.example.auth.dto.login.LoginRequestDto;
 import com.example.auth.dto.login.LoginResponseDto;
-import com.example.auth.dto.otp.OtpRequestDto;
-import com.example.auth.dto.otp.OtpResponseDto;
 import com.example.auth.dto.otp.VerifyOtpRequestDto;
 import com.example.auth.dto.register.RegisterRequestDto;
 import com.example.auth.entity.RoleEntity;
@@ -17,14 +16,12 @@ import com.example.auth.repository.UserRepository;
 import com.example.auth.service.AuthService;
 import com.example.auth.service.MessageService;
 import com.example.auth.util.TokenManager;
-import com.example.auth.util.enums.OperationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,9 +34,9 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
     private final TokenManager tokenManager;
     private final AuthenticationManager authenticationManager;
-    private final WebClient webClient;
     private final RegisterGrpcClientImpl registerGrpcClient;
     private final MessageService messageService;
+    private final OtpGrpcClientServiceImpl otpGrpcClientService;
 
     @Override
     public void register(RegisterRequestDto request, String userAgent) {
@@ -54,9 +51,7 @@ public class AuthServiceImpl implements AuthService {
         userEntity.setActive(false); // need to verify otp
 
         Collection<RoleEntity> roleEntities = new ArrayList<>();
-        // need field default role (USER)
-        var role = roleRepository.findById(1)
-                .orElseThrow(RoleNotFoundException::new);
+        var role = roleRepository.findByDefaultRole(true);
         roleEntities.add(role);
 
         userEntity.setRoles(roleEntities);
@@ -70,7 +65,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponseDto login(LoginRequestDto request, String requestId) {
+    public LoginResponseDto login(LoginRequestDto request, String userAgent) {
         var userEntity = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(
                         () -> new UnauthorizedException(messageService.getMessage("UNAUTHORIZED", "az"))
@@ -83,53 +78,56 @@ public class AuthServiceImpl implements AuthService {
             throw new UserNotFound(messageService.getMessage("EMAIL_PASSWORD_WRONG", "az"));
         }
 
-
         if(userEntity.isLoginOtp()) {
-            var otpRequest = new OtpRequestDto(
-                    OperationType.LOGIN,
-                    userEntity.getId()
-            );
-            webClient.post()
-                    .uri("http://localhost:8081/api/v1/otp")
-                    .bodyValue(otpRequest)
-                    .header("X-Request-Id", requestId)
-                    .retrieve()
-                    .bodyToMono(OtpResponseDto.class)
-                    .block();
+            otpGrpcClientService.createOtp(CreateOtpRequestDto.newBuilder()
+                            .setUserId(userEntity.getId())
+                            .setOperationType(com.example.auth.OperationType.LOGIN)
+                            .setUserAgent(userAgent)
+                    .build());
             return new LoginResponseDto();
         }
-        return new LoginResponseDto(tokenManager.generateToken(request.getUsername()));
+        var roles = new ArrayList<String>();
+        userEntity.getRoles().forEach(roleEntity -> {
+            roles.add(roleEntity.getCode());
+        });
+        return new LoginResponseDto(tokenManager.generateToken(userEntity.getUsername(), roles, userEntity.isSuperAdmin()));
     }
 
     @Override
-    public LoginResponseDto verifyLoginOtp(VerifyOtpRequestDto request) {
+    public LoginResponseDto verifyLoginOtp(VerifyOtpRequestDto request, String userAgent) {
         var userEntity = userRepository.findById(request.getUserId())
                 .orElseThrow(UnauthorizedException::new);
         try {
-            request.setOperationType(OperationType.LOGIN);
-            webClient.post()
-                    .uri("http://localhost:8081/api/v1/otp/verify")
-                    .bodyValue(request)
-                    .retrieve()
-                    .bodyToMono(Void.class)
-                    .block();
-            return new LoginResponseDto(tokenManager.generateToken(userEntity.getUsername()));
+            otpGrpcClientService.verifyOtp(com.example.auth.VerifyOtpRequestDto.newBuilder()
+                            .setOperationType(com.example.auth.OperationType.LOGIN)
+                            .setOtpCode(request.getOtpCode())
+                            .setUserId(request.getUserId())
+                            .setUserAgent(userAgent)
+                    .build());
+            var roles = new ArrayList<String>();
+            userEntity.getRoles().forEach(roleEntity -> {
+                roles.add(roleEntity.getCode());
+            });
+            return new LoginResponseDto(tokenManager.generateToken(userEntity.getUsername(), roles, userEntity.isSuperAdmin()));
         } catch(Exception e) {
             throw new UnauthorizedException("Invalid OTP");
         }
     }
 
     @Override
-    public void verifyRegisterOtp(VerifyOtpRequestDto request) {
+    public void verifyRegisterOtp(VerifyOtpRequestDto request, String userAgent) {
         var entity = userRepository.findById(request.getUserId())
                 .orElseThrow(UserNotFound::new);
-        request.setOperationType(OperationType.REGISTER);
-        webClient.post()
-                .uri("http://localhost:8081/api/v1/otp/verify")
-                .bodyValue(request)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .block();
+        try {
+            otpGrpcClientService.verifyOtp(com.example.auth.VerifyOtpRequestDto.newBuilder()
+                            .setOperationType(com.example.auth.OperationType.REGISTER)
+                            .setUserId(entity.getId())
+                            .setUserAgent(userAgent)
+                            .setOtpCode(request.getOtpCode())
+                    .build());
+        } catch(Exception e) {
+            return;
+        }
         entity.setActive(true);
         userRepository.save(entity);
     }

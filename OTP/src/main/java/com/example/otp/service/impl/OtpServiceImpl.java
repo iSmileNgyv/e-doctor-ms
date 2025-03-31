@@ -50,15 +50,20 @@ public class OtpServiceImpl implements OtpService {
 
     @Override
     public void verifyOtpCode(VerifyRequestDto request, String userAgent) {
-        String key = request.getUserId() + "_" + request.getOperationType() + "_" + userAgent;
+        if(request.getUserAgent() == null)
+            request.setUserAgent(userAgent);
+        String key = request.getUserId() + "_" + request.getOperationType() + "_" + request.getUserAgent();
         String value = request.getOtpCode();
-        if(!stringRedisTemplate.hasKey(key) || stringRedisTemplate.opsForValue().get(key)== null) {
+        if(!stringRedisTemplate.hasKey(key) || stringRedisTemplate.opsForValue().get(key) == null) {
+            System.err.println("cannot create otp error " + key);
             throw new CannotCreateOtpException();
         }
         String storedValue = stringRedisTemplate.opsForValue().get(key);
         if(!value.equals(storedValue)) {
+            System.err.println("wrong otp code error " + storedValue);
             throw new WrongOtpException();
         }
+        stringRedisTemplate.delete(key);
     }
 
     @Override

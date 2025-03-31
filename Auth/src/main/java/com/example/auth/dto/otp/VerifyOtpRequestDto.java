@@ -12,4 +12,5 @@ public class VerifyOtpRequestDto {
     private long userId;
     private String otpCode;
     private OperationType operationType;
+    private String userAgent;
 }

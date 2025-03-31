@@ -2,8 +2,9 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "com.example.otp";
 
-service  CreateOtpCodeService {
+service  OtpService {
   rpc createOtp(CreateOtpRequestDto) returns (CreateOtpResponseDto);
+  rpc verifyOtp(VerifyOtpRequestDto) returns (VerifyOtpResponseDto);
 }
 
 enum OperationType {
@@ -20,4 +21,15 @@ message CreateOtpRequestDto {
 message CreateOtpResponseDto {
   bool success = 1;
   string message = 2;
+}
+
+message VerifyOtpRequestDto {
+  int64 userId = 1;
+  string otpCode = 2;
+  OperationType operationType = 3;
+  string userAgent = 4;
+}
+
+message VerifyOtpResponseDto {
+  bool success = 1;
 }
