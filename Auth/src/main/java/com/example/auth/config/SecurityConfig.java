@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "api/v1/auth/register",
                                 "api/v1/auth/verify-login-otp",
                                 "api/v1/auth/verify-register-otp",
-                                "api/v1/message"
+                                "api/v1/message",
+                                "/ws/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

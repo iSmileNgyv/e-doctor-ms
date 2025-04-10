@@ -5,6 +5,7 @@ import com.example.auth.entity.RoleAccessEntity;
 import com.example.auth.entity.RoleEntity;
 import com.example.auth.repository.RoleAccessRepository;
 import com.example.auth.repository.RoleRepository;
+import com.example.auth.service.CustomWebSocketHandler;
 import com.example.auth.service.RoleAccessService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 public class RoleAccessServiceImpl implements RoleAccessService {
     private final RoleAccessRepository roleAccessRepository;
     private final RoleRepository roleRepository;
+    private final CustomWebSocketHandler customWebSocketHandler;
 
     @Override
     public boolean hasAccess(String operationCode, List<String> roleCodes) {
@@ -28,6 +30,7 @@ public class RoleAccessServiceImpl implements RoleAccessService {
     public void deleteRoleAccess(String roleCode, String operationCode) {
         try {
             roleAccessRepository.deleteRoleAccessEntitiesByRoleCodeAndOperationCode(roleCode, operationCode);
+            customWebSocketHandler.broadcastMessage(roleCode);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             throw new RuntimeException("Failed to delete role access", e);
@@ -46,6 +49,7 @@ public class RoleAccessServiceImpl implements RoleAccessService {
         entity.setOperation(operationEntity);
         try {
             roleAccessRepository.save(entity);
+            customWebSocketHandler.broadcastMessage(roleCode);
         } catch (Exception e) {
             System.err.println(e.getMessage());
             throw new RuntimeException("Failed to add role access", e);

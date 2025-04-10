@@ -59,23 +59,22 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if(!tokenManager.isExpired(token)) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                System.out.println(this.convertToDynamicPattern(request.getRequestURI()) + " request budur");
                 if(!tokenManager.isSuperAdmin(token)) {
                     String requestEndpoint = this.convertToDynamicPattern(request.getRequestURI());
-                    System.out.println("dynamic pattern " + requestEndpoint);
-                    String operationCode = operationService.getOperationCode(requestEndpoint);
+                    var operation = operationService.getOperationCode(requestEndpoint);
+                    String operationCode = operation.getOperationCode();
                     if (operationCode == null) {
-                        System.err.println(requestEndpoint + " operation code not found");
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     }
                     // old user details
                     List<String> roleCodes = userDetails.getAuthorities().stream()
                             .map(GrantedAuthority::getAuthority)
                             .toList();
-                    if (!roleAccessService.hasAccess(operationCode, roleCodes)) {
-                        System.err.println(roleCodes + " " + operationCode + " not found");
-                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                        return;
+                    if(!operation.isGlobal()) {
+                        if (!roleAccessService.hasAccess(operationCode, roleCodes)) {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            return;
+                        }
                     }
                 }
                 UsernamePasswordAuthenticationToken authentication =

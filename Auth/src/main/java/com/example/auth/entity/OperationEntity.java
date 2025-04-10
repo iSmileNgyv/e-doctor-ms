@@ -16,6 +16,8 @@ public class OperationEntity {
     private String name;
     @Column(nullable = false, unique = true)
     private String endpoint;
+    @Column(nullable = false, name = "is_global")
+    private boolean isGlobal;
 
     @OneToMany(mappedBy = "operation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<RoleAccessEntity> roleAccessEntitySet;
