@@ -15,8 +15,11 @@ public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
+    private String name;
+    private String surname;
     private String username;
     private String password;
+    private String phoneNumber;
     @Column(name = "login_otp", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean loginOtp = false;
     @Column(name = "is_active", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")

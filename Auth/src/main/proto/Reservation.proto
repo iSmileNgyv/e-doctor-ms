@@ -1,0 +1,22 @@
+syntax = "proto3";
+option java_multiple_files = true;
+option java_package = "com.example.auth";
+
+service ReservationService {
+  rpc GetUsersInfo(GetUsersInfoRequest) returns (GetUsersInfoResponse);
+}
+
+message GetUsersInfoRequest {
+  repeated int64 userId = 1;
+}
+
+message UserInfo {
+  int64 id = 1;
+  string fullName = 2;
+  string username = 3;
+  string phoneNumber = 4;
+}
+
+message GetUsersInfoResponse {
+  repeated UserInfo users = 1;
+}
