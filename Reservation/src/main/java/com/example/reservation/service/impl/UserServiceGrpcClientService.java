@@ -8,19 +8,19 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserServiceGrpcClientService{
     @GrpcClient("authService")
     private ReservationServiceGrpc.ReservationServiceBlockingStub reservationServiceBlockingStub;
 
-    public List<UserInfo> getUsersInfo(List<Long> userId) {
+    public Map<Long, UserInfo> getUsersInfo(List<Long> userId) {
         var request = GetUsersInfoRequest.newBuilder()
                 .addAllUserId(userId)
                 .build();
 
         GetUsersInfoResponse response = reservationServiceBlockingStub.getUsersInfo(request);
-
-        return response.getUsersList();
+        return response.getUsersMap();
     }
 }

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
@@ -17,4 +19,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     @Query("UPDATE UserEntity u SET u.isActive = :isActive WHERE u.id = :id")
     @Modifying
     int updateIsActiveById(@Param("id") long id, @Param("isActive") boolean isActive);
+    List<UserEntity> getUsersByIdIn(List<Long> ids);
 }

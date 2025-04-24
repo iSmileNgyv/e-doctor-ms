@@ -18,5 +18,5 @@ message UserInfo {
 }
 
 message GetUsersInfoResponse {
-  repeated UserInfo users = 1;
+  map<int64, UserInfo> users = 1;
 }
