@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
+
 public interface Storage {
     CompletableFuture<List<FileResult>> uploadFileAsync(String pathOrContainerName, List<MultipartFile> files);
     CompletableFuture<FileResult> singleUploadFileAsync(String pathOrContainerName, MultipartFile file);

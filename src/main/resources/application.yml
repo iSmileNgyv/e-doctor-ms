@@ -16,7 +16,11 @@ spring:
         - id: reservation-service
           uri: http://localhost:8086
           predicates:
-            - Path = /api/v1/reservation/**
+            - Path=/api/v1/reservation/**
+        - id: infrastructure-service
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/v1/translation/**
 grpc:
   client:
     authService:

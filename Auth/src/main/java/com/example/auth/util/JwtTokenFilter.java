@@ -91,7 +91,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         StringBuilder dynamicPattern = new StringBuilder();
 
         for (String segment : segments) {
-            if (segment.isEmpty()) continue;
+            if (segment.isEmpty())
+                continue;
 
             if (segment.matches("^[A-Z_]+$")) {
                 dynamicPattern.append("/{CODE}");

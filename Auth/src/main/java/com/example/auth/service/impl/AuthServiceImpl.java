@@ -8,13 +8,11 @@ import com.example.auth.dto.register.RegisterRequestDto;
 import com.example.auth.entity.RoleEntity;
 import com.example.auth.entity.UserEntity;
 import com.example.auth.exception.auth.UnauthorizedException;
-import com.example.auth.exception.user.RoleNotFoundException;
 import com.example.auth.exception.user.UserNotFound;
 import com.example.auth.exception.user.UsernameAlreadyExistException;
 import com.example.auth.repository.RoleRepository;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.service.AuthService;
-import com.example.auth.service.MessageService;
 import com.example.auth.util.TokenManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,7 +33,6 @@ public class AuthServiceImpl implements AuthService {
     private final TokenManager tokenManager;
     private final AuthenticationManager authenticationManager;
     private final RegisterGrpcClientImpl registerGrpcClient;
-    private final MessageService messageService;
     private final OtpGrpcClientServiceImpl otpGrpcClientService;
 
     @Override
@@ -68,14 +65,14 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponseDto login(LoginRequestDto request, String userAgent) {
         var userEntity = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(
-                        () -> new UnauthorizedException(messageService.getMessage("UNAUTHORIZED", "az"))
+                        () -> new UnauthorizedException("İcazəsiz əməliyyat")
                 );
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
         } catch (AuthenticationException e) {
-            throw new UserNotFound(messageService.getMessage("EMAIL_PASSWORD_WRONG", "az"));
+            throw new UserNotFound("Email və ya şifrə yanlışdır");
         }
 
         if(userEntity.isLoginOtp()) {

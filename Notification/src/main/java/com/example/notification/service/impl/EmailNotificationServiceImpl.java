@@ -5,9 +5,7 @@ import com.example.notification.dto.EmailNotificationResponseDto;
 import com.example.notification.exception.notification.UserNotFoundException;
 import com.example.notification.repository.UserRepository;
 import com.example.notification.service.NotificationService;
-import com.example.notification.util.MessageTemplate;
 import com.example.notification.util.enums.DeliveryMethod;
-import com.example.notification.util.enums.ResponseMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -22,7 +20,6 @@ import java.util.Map;
 public class EmailNotificationServiceImpl implements NotificationService<EmailNotificationRequestDto, EmailNotificationResponseDto> {
     private final JavaMailSender javaMailSender;
     private final UserRepository userRepository;
-    private final MessageTemplate messageTemplate;
 
     @Override
     public EmailNotificationResponseDto send(EmailNotificationRequestDto request) {
@@ -53,13 +50,7 @@ public class EmailNotificationServiceImpl implements NotificationService<EmailNo
             var user = findUser.get();
             request.setSubject("Your otp code");
             request.setRecipient(user.getRecipient());
-            Map<String, String> params = Map.of(
-                    "code", message.get("code").toString()
-            );
-            request.setMessage(
-                    messageTemplate.getLocalizedMessage(ResponseMessage.NOTIFICATION_REGISTER_SUCCESS_MESSAGE,
-                            "az", params)
-            );
+            request.setMessage("Qeydiyyatdan uğurla keçdiniz.\n Otp kod: " + message.get("code").toString());
             this.send(request);
             acknowledgment.acknowledge();
         } catch(Exception ex) {

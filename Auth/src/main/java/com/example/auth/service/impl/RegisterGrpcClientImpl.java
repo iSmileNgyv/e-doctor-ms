@@ -45,7 +45,7 @@ public class RegisterGrpcClientImpl {
 
             @Override
             public void onCompleted() {
-                future.complete(null); // Notification işlemi tamamlandı
+                future.complete(null);
             }
         };
 

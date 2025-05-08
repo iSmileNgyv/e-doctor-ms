@@ -56,7 +56,7 @@ public class OtpServiceImpl implements OtpService {
         String value = request.getOtpCode();
         if(!stringRedisTemplate.hasKey(key) || stringRedisTemplate.opsForValue().get(key) == null) {
             System.err.println("cannot create otp error " + key);
-            throw new CannotCreateOtpException();
+            throw new CannotCreateOtpException(); // cannot verify otp
         }
         String storedValue = stringRedisTemplate.opsForValue().get(key);
         if(!value.equals(storedValue)) {

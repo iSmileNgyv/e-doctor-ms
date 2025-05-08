@@ -4,7 +4,6 @@ import com.example.auth.dto.role.create.CreateRoleRequestDto;
 import com.example.auth.dto.role.getAll.GetAllRoleResponseDto;
 import com.example.auth.dto.role.getAll.OperationResponseDto;
 import com.example.auth.dto.role.update.UpdateRoleRequestDto;
-import com.example.auth.entity.RoleAccessEntity;
 import com.example.auth.entity.RoleEntity;
 import com.example.auth.exception.role.CannotCreateRoleException;
 import com.example.auth.exception.role.CannotUpdateRoleException;
@@ -15,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
