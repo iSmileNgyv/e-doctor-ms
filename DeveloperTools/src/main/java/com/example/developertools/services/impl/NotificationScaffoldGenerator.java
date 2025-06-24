@@ -1,10 +1,14 @@
 package com.example.developertools.services.impl;
 
 import com.example.developertools.services.ScaffoldGenerator;
+import com.github.javaparser.JavaParser;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.body.EnumConstantDeclaration;
-import com.github.javaparser.ast.body.EnumDeclaration;
+import com.github.javaparser.ast.body.*;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.stmt.BlockStmt;
+import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -12,10 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Optional;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class NotificationScaffoldGenerator implements ScaffoldGenerator {
@@ -33,7 +34,26 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
         System.out.printf("⚙️ Generating: %s with [%s, %s]%n", name, requestDto, responseDto);
 
-        generateServiceClass(name, requestDto, responseDto);
+        boolean serviceExists = checkServiceClassExists(name);
+        if (!serviceExists) {
+            generateServiceClass(name, requestDto, responseDto);
+        } else {
+            System.out.printf("⚠️ Service class already exists: %sNotificationServiceImpl.java%n", name);
+        }
+
+        if (!"BaseRequestDto".equals(requestDto)) {
+            System.out.printf("📦 Checking request DTO...%n");
+            generateDto(requestDto);
+        }
+        if (!"BaseResponseDto".equals(responseDto)) {
+            System.out.printf("📦 Checking response DTO...%n");
+            generateDto(responseDto);
+        }
+
+        addEnumConstantWithJavaParser(name.toUpperCase(Locale.ENGLISH));
+        addEnumToProto(name.toUpperCase(Locale.ENGLISH));
+        regenerateProto();
+        addServiceToFactory(name.toLowerCase(Locale.ENGLISH), name.toUpperCase(Locale.ENGLISH));
     }
 
     @Override
@@ -43,17 +63,10 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
     private void generateServiceClass(String name, String requestDto, String responseDto) {
         try {
+            Path projectRoot = findProjectRoot();
+            if (projectRoot == null) return;
             String className = name + "NotificationServiceImpl";
-            String outputPackagePath = "com/example/notification/service/impl";
-            String outputDir = "../Notification/src/main/java/" + outputPackagePath;
-            String outputFilePath = outputDir + "/" + className + ".java";
-
-            Path outputPath = Paths.get(outputFilePath);
-            if (Files.exists(outputPath)) {
-                System.out.printf("❌ File already exists: %s%n", outputFilePath);
-                System.out.println("🚫 Aborted. No files were overwritten.");
-                return;
-            }
+            Path outputPath = projectRoot.resolve("Notification/src/main/java/com/example/notification/service/impl/" + className + ".java");
 
             InputStream is = getClass().getClassLoader().getResourceAsStream("templates/NotificationTemplate.java");
             if (is == null) {
@@ -70,23 +83,8 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
             Files.createDirectories(outputPath.getParent());
             Files.writeString(outputPath, content);
+            System.out.printf("✅ Java class generated: %s%n", outputPath);
 
-            System.out.printf("✅ Java class generated: %s%n", outputFilePath);
-
-            if (!"BaseRequestDto".equals(requestDto)) {
-                System.out.printf("📦 Checking request DTO...%n");
-                generateDto(requestDto);
-                //System.out.printf("✅ Request DTO to be created: %s.java%n", requestDto);
-            }
-            if (!"BaseResponseDto".equals(responseDto)) {
-                System.out.printf("📦 Checking response DTO...%n");
-                generateDto(responseDto);
-            }
-
-            addEnumConstantWithJavaParser(name.toUpperCase());
-
-            addEnumToProto(name.toUpperCase());
-            regenerateProto();
         } catch (Exception e) {
             System.out.println("❌ Error during service class generation: " + e.getMessage());
         }
@@ -94,12 +92,12 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
     private void generateDto(String dtoName) {
         try {
-            String outputDir = "../Notification/src/main/java/com/example/notification/dto";
-            String filePath = outputDir + "/" + dtoName + ".java";
-            Path path = Paths.get(filePath);
+            Path projectRoot = findProjectRoot();
+            if (projectRoot == null) return;
+            Path path = projectRoot.resolve("Notification/src/main/java/com/example/notification/dto/" + dtoName + ".java");
 
             if (Files.exists(path)) {
-                System.out.printf("⚠️ DTO already exists: %s%n", filePath);
+                System.out.printf("⚠️ DTO already exists: %s%n", path);
                 return;
             }
 
@@ -119,7 +117,7 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
             Files.createDirectories(path.getParent());
             Files.writeString(path, content);
 
-            System.out.printf("✅ DTO generated from template: %s%n", filePath);
+            System.out.printf("✅ DTO generated from template: %s%n", path);
 
         } catch (Exception e) {
             System.out.println("❌ Error generating DTO: " + e.getMessage());
@@ -128,8 +126,9 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
     private void addEnumConstantWithJavaParser(String newConstant) {
         try {
-            String filePath = "../Notification/src/main/java/com/example/notification/util/enums/DeliveryMethod.java";
-            Path path = Paths.get(filePath);
+            Path projectRoot = findProjectRoot();
+            if (projectRoot == null) return;
+            Path path = projectRoot.resolve("Notification/src/main/java/com/example/notification/util/enums/DeliveryMethod.java");
             if (!Files.exists(path)) {
                 System.out.println("❌ DeliveryMethod.java not found.");
                 return;
@@ -145,31 +144,24 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
             EnumDeclaration enumDecl = enumOpt.get();
 
-            // Check if the constant already exists
             if (enumDecl.getEntries().stream().anyMatch(e -> e.getNameAsString().equals(newConstant))) {
                 System.out.printf("⚠️ %s already exists in DeliveryMethod enum.%n", newConstant);
                 return;
             }
 
-            // Max value'yu bul
             int max = enumDecl.getEntries().stream()
-                    .map(e -> e.getArguments().getFirst()  // Optional<Expression>
+                    .map(e -> e.getArguments().getFirst()
                             .map(expr -> expr.asIntegerLiteralExpr().asNumber().intValue())
-                            .orElse(-1)
-                    )
+                            .orElse(-1))
                     .max(Integer::compareTo)
                     .orElse(-1);
 
             int newValue = max + 1;
-
-            // create new enum constant
             EnumConstantDeclaration newEntry = new EnumConstantDeclaration(newConstant);
             newEntry.addArgument(Integer.toString(newValue));
             enumDecl.addEntry(newEntry);
 
-            // write changes back to file
             Files.writeString(path, cu.toString());
-
             System.out.printf("✅ Added %s(%d) to DeliveryMethod enum.%n", newConstant, newValue);
 
         } catch (Exception e) {
@@ -179,8 +171,8 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
     private void addEnumToProto(String enumName) {
         try {
-            // Resolve the proto file path relative to project root
-            Path projectRoot = Paths.get("").toAbsolutePath();
+            Path projectRoot = findProjectRoot();
+            if (projectRoot == null) return;
             Path protoPath = projectRoot.resolve("Notification/src/main/proto/Register.proto");
 
             List<String> lines = Files.readAllLines(protoPath);
@@ -192,23 +184,16 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
             for (String line : lines) {
                 String trimmed = line.trim();
 
-                // Detect enum declaration
                 if (trimmed.startsWith("enum DeliveryMethod")) {
                     insideEnum = true;
                 }
-
-                // Check for existing enum entry
                 if (insideEnum && trimmed.matches("^" + enumName + "\\s*=\\s*\\d+;")) {
                     alreadyExists = true;
                 }
-
-                // Find max existing enum value
                 if (insideEnum && trimmed.matches("^[A-Z_]+\\s*=\\s*(\\d+);")) {
                     int value = Integer.parseInt(trimmed.replaceAll("[^0-9]", ""));
                     maxValue = Math.max(maxValue, value);
                 }
-
-                // Insert new enum before closing brace
                 if (insideEnum && trimmed.equals("}")) {
                     if (!alreadyExists) {
                         updated.add("  " + enumName + " = " + (maxValue + 1) + ";");
@@ -216,7 +201,6 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
                     }
                     insideEnum = false;
                 }
-
                 updated.add(line);
             }
 
@@ -229,32 +213,106 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
     private void regenerateProto() {
         try {
-            // Resolve proto paths relative to the project root
-            Path projectRoot = Paths.get("").toAbsolutePath();
-            String protoDir = projectRoot.resolve("Notification/src/main/proto").toString();
-            String protoFile = protoDir + "/Register.proto";
+            Path projectRoot = findProjectRoot();
+            if (projectRoot == null) return;
+            Path notificationDir = projectRoot.resolve("Notification");
+            Path gradlewPath = notificationDir.resolve("gradlew");
+            boolean useWrapper = Files.exists(gradlewPath);
+            String command = useWrapper ? "./gradlew" : "gradle";
 
-            // Run protoc compiler
-            ProcessBuilder pb = new ProcessBuilder(
-                    "protoc",
-                    "--java_out=" + protoDir,
-                    "-I=" + protoDir,
-                    protoFile
-            );
+            ProcessBuilder pb = new ProcessBuilder(command, "generateProto");
+            pb.directory(notificationDir.toFile());
+            pb.inheritIO();
 
-            pb.inheritIO(); // Show output in terminal
             Process process = pb.start();
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
-                System.out.println("✅ Proto generation completed successfully.");
+                System.out.println("✅ Proto generation completed via " + (useWrapper ? "./gradlew" : "gradle"));
             } else {
-                System.out.println("❌ Proto generation failed. Exit code: " + exitCode);
+                System.out.println("❌ Proto generation failed with exit code: " + exitCode);
             }
+
         } catch (Exception e) {
             System.out.println("❌ Error during proto generation: " + e.getMessage());
         }
     }
 
+    public void addServiceToFactory(String beanName, String enumConstant) {
+        try {
+            Path projectRoot = findProjectRoot();
+            if (projectRoot == null) return;
+            Path filePath = projectRoot.resolve("Notification/src/main/java/com/example/notification/service/NotificationServiceFactory.java");
 
+            JavaParser parser = new JavaParser();
+            CompilationUnit cu = parser.parse(filePath).getResult().orElseThrow();
+
+            ClassOrInterfaceDeclaration clazz = cu.getClassByName("NotificationServiceFactory")
+                    .orElseThrow(() -> new IllegalStateException("NotificationServiceFactory not found"));
+            ConstructorDeclaration constructor = clazz.getConstructors().stream()
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Constructor not found"));
+
+            boolean paramExists = constructor.getParameters().stream()
+                    .anyMatch(p -> p.getNameAsString().equals(beanName));
+            if (!paramExists) {
+                String typeName = capitalize(beanName) + "NotificationServiceImpl";
+                Parameter newParam = new Parameter(new ClassOrInterfaceType(null, typeName), beanName);
+                constructor.addParameter(newParam);
+                System.out.printf("➕ Added constructor parameter: %s %s%n", typeName, beanName);
+            }
+
+            BlockStmt body = constructor.getBody();
+            boolean alreadyHasPut = body.getStatements().stream()
+                    .filter(Statement::isExpressionStmt)
+                    .map(stmt -> stmt.asExpressionStmt().getExpression())
+                    .filter(Expression::isMethodCallExpr)
+                    .map(Expression::asMethodCallExpr)
+                    .anyMatch(expr ->
+                            expr.getNameAsString().equals("put") &&
+                                    expr.getScope().isPresent() &&
+                                    expr.getScope().get().toString().equals("serviceMap") &&
+                                    expr.getArgument(0).toString().equals("DeliveryMethod." + enumConstant));
+
+            if (!alreadyHasPut) {
+                String putLine = String.format("serviceMap.put(DeliveryMethod.%s, %s);", enumConstant, beanName);
+                body.addStatement(putLine);
+                System.out.printf("✅ Added serviceMap.put: %s%n", putLine);
+            } else {
+                System.out.printf("ℹ️  serviceMap.put for %s already exists. Skipping.%n", enumConstant);
+            }
+
+            Files.writeString(filePath, cu.toString());
+        } catch (Exception e) {
+            System.out.println("❌ Error updating NotificationServiceFactory: " + e.getMessage());
+        }
+    }
+
+    private String capitalize(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toUpperCase(Locale.ENGLISH) + input.substring(1);
+    }
+
+    private boolean checkServiceClassExists(String name) {
+        Path projectRoot = findProjectRoot();
+        if (projectRoot == null) return false;
+        Path outputPath = projectRoot.resolve("Notification/src/main/java/com/example/notification/service/impl/" + name + "NotificationServiceImpl.java");
+        return Files.exists(outputPath);
+    }
+
+    private Path findProjectRoot() {
+        Path current = Paths.get("").toAbsolutePath();
+
+        while (current != null) {
+            if (Files.exists(current.resolve("settings.gradle")) ||
+                    Files.exists(current.resolve(".git")) ||
+                    Files.exists(current.resolve("Notification/build.gradle"))) {
+                return current;
+            }
+            current = current.getParent();
+        }
+
+        System.out.println("❌ Project root not found. Please run this command from the root of the your project.");
+        return null;
+    }
 }
