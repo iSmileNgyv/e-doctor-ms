@@ -2,16 +2,20 @@ package com.example.notification.util.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.Objects;
 
 public enum DeliveryMethod {
-    SMS(0),
-    EMAIL(1);
+
+    SMS(0), EMAIL(1);
+
     private final Integer value;
+
     DeliveryMethod(Integer value) {
         this.value = value;
     }
+
     @JsonValue
-    public int getValue() {
+    public Integer getValue() {
         return value;
     }
 
@@ -21,13 +25,12 @@ public enum DeliveryMethod {
     }
 
     @JsonCreator
-    public static DeliveryMethod fromValue(int value) {
+    public static DeliveryMethod fromValue(Integer value) {
         for (DeliveryMethod method : values()) {
-            if (method.value == value) {
+            if (Objects.equals(method.value, value)) {
                 return method;
             }
         }
         throw new IllegalArgumentException("Invalid delivery method value: " + value);
     }
-
 }

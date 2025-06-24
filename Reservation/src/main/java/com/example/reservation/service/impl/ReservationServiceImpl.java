@@ -20,8 +20,6 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public void makeReservation(MakeReservationRequestDto request) {
         Map<Long, UserInfo> usersInfo = userServiceGrpcClientService.getUsersInfo(List.of(request.getUserId(), request.getCustomerId()));
-        System.out.println(request);
-        System.err.println(usersInfo);
         var requestUserInfo = usersInfo.get(request.getUserId());
         var customerUserInfo = usersInfo.get(request.getCustomerId());
         reservationRepository.save(ReservationEntity.builder()
