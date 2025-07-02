@@ -9,6 +9,7 @@ service RegisterMultiService {
 enum DeliveryMethod {
   SMS = 0;
   EMAIL = 1;
+  TELEGRAM = 2;
 }
 
 message RegisterMultiRequestDto {

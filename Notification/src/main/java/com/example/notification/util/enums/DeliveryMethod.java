@@ -6,7 +6,7 @@ import java.util.Objects;
 
 public enum DeliveryMethod {
 
-    SMS(0), EMAIL(1);
+    SMS(0), EMAIL(1), TELEGRAM(2);
 
     private final Integer value;
 

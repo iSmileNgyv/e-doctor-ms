@@ -3,7 +3,6 @@ package com.example.auth.service.impl;
 import com.example.auth.GetUsersInfoRequest;
 import com.example.auth.GetUsersInfoResponse;
 import com.example.auth.ReservationServiceGrpc;
-import com.example.auth.entity.UserEntity;
 import com.example.auth.repository.UserRepository;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;

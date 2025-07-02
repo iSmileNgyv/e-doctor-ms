@@ -53,7 +53,7 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
         addEnumConstantWithJavaParser(name.toUpperCase(Locale.ENGLISH));
         addEnumToProto(name.toUpperCase(Locale.ENGLISH));
         regenerateProto();
-        addServiceToFactory(name.toLowerCase(Locale.ENGLISH), name.toUpperCase(Locale.ENGLISH));
+        addServiceToFactory(decapitalize(name), name.toUpperCase(Locale.ENGLISH));
     }
 
     @Override
@@ -314,5 +314,10 @@ public class NotificationScaffoldGenerator implements ScaffoldGenerator {
 
         System.out.println("❌ Project root not found. Please run this command from the root of the your project.");
         return null;
+    }
+
+    private String decapitalize(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toLowerCase(Locale.ENGLISH) + input.substring(1);
     }
 }

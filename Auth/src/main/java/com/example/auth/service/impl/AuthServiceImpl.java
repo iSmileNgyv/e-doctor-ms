@@ -13,6 +13,7 @@ import com.example.auth.exception.user.UsernameAlreadyExistException;
 import com.example.auth.repository.RoleRepository;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.service.AuthService;
+import com.example.auth.service.TranslationService;
 import com.example.auth.util.TokenManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final RegisterGrpcClientImpl registerGrpcClient;
     private final OtpGrpcClientServiceImpl otpGrpcClientService;
+    private final TranslationService translationService;
 
     @Override
     public void register(RegisterRequestDto request, String userAgent) {
@@ -65,14 +67,14 @@ public class AuthServiceImpl implements AuthService {
     public LoginResponseDto login(LoginRequestDto request, String userAgent) {
         var userEntity = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(
-                        () -> new UnauthorizedException("İcazəsiz əməliyyat")
+                        () -> new UnauthorizedException(translationService.get("UNAUTHORIZED_OPERATION", "en"))
                 );
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
         } catch (AuthenticationException e) {
-            throw new UserNotFound("Email və ya şifrə yanlışdır");
+            throw new UserNotFound(translationService.get("WRONG_AUTH", "en"));
         }
 
         if(userEntity.isLoginOtp()) {
@@ -107,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
             });
             return new LoginResponseDto(tokenManager.generateToken(userEntity.getUsername(), roles, userEntity.isSuperAdmin()));
         } catch(Exception e) {
-            throw new UnauthorizedException("Invalid OTP");
+            throw new UnauthorizedException(translationService.get("INVALID_OTP", "en"));
         }
     }
 

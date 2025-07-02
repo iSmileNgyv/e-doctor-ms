@@ -46,7 +46,7 @@ public class RoleServiceImpl implements RoleService {
             role.setName(request.getName());
             roleRepository.save(role);
         } catch (Exception ex) {
-            System.out.println("Cannot update role " + Arrays.toString(ex.getStackTrace()));
+            //System.out.println("Cannot update role " + Arrays.toString(ex.getStackTrace()));
             throw new CannotUpdateRoleException();
         }
     }

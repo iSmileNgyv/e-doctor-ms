@@ -5,7 +5,8 @@ import picocli.CommandLine;
 import java.util.List;
 
 @CommandLine.Command(name = "new", description = "Generate scaffolds", subcommands = {
-        NotificationCommand.class
+        NotificationCommand.class,
+        StorageCommand.class
 })
 @Component
 public class NewCommand implements Runnable {
