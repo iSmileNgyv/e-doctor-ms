@@ -3,6 +3,7 @@ package com.example.auth.service.impl;
 import com.example.auth.GetUsersInfoRequest;
 import com.example.auth.GetUsersInfoResponse;
 import com.example.auth.ReservationServiceGrpc;
+import com.example.auth.entity.UserEntity;
 import com.example.auth.repository.UserRepository;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class UserInfoGrpcServiceImpl extends ReservationServiceGrpc.ReservationS
             var users = userRepository.getUsersByIdIn(request.getUserIdList());
             var userMap = users.stream()
                     .collect(Collectors.toMap(
-                            user -> user.getId(), // Map key: user ID
+                            UserEntity::getId, // Map key: user ID
                             user -> com.example.auth.UserInfo.newBuilder()
                                     .setId(user.getId())
                                     .setFullName(String.format("%s %s", user.getName(), user.getSurname()))

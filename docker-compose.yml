@@ -1,65 +1,245 @@
-version: "3"
+version: '3.8'
 
 services:
-  mongo:
-    image: mongo:6
-    container_name: system-settings-mongo
+  # ==================== DATABASES ====================
+  postgres-auth:
+    image: postgres:15
+    container_name: postgres-auth
+    restart: always
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+    ports:
+      - "5503:5432"
+    networks:
+      - e-doctor-net
+
+  postgres-otp:
+    image: postgres:15
+    container_name: postgres-otp
+    restart: always
+    environment:
+      POSTGRES_DB: otp_db
+      POSTGRES_USER: otp_user
+      POSTGRES_PASSWORD: otp_pass
+    ports:
+      - "5500:5432"
+    networks:
+      - e-doctor-net
+
+  postgres-notification:
+    image: postgres:15
+    container_name: postgres-notification
+    restart: always
+    environment:
+      POSTGRES_DB: notification_db
+      POSTGRES_USER: notification_user
+      POSTGRES_PASSWORD: notification_pass
+    ports:
+      - "5501:5432"
+    networks:
+      - e-doctor-net
+
+  postgres-reservation:
+    image: postgres:15
+    container_name: postgres-reservation
+    restart: always
+    environment:
+      POSTGRES_DB: reservation_db
+      POSTGRES_USER: reservation_user
+      POSTGRES_PASSWORD: reservation_pass
+    ports:
+      - "5502:5432"
+    networks:
+      - e-doctor-net
+
+  postgres-storage:
+    image: postgres:15
+    container_name: postgres-storage
+    restart: always
+    environment:
+      POSTGRES_DB: storage_db
+      POSTGRES_USER: storage_user
+      POSTGRES_PASSWORD: storage_pass
+    ports:
+      - "5504:5432"
+    networks:
+      - e-doctor-net
+
+  # MongoDB for Infrastructure Service
+  mongodb:
+    image: mongo:7
+    container_name: mongo-infra
     restart: always
     ports:
       - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+    networks:
+      - e-doctor-net
+
+  # Redis for OTP caching
+  redis:
+    image: redis:7
+    container_name: redis-otp
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - e-doctor-net
+
+  # Kafka & Zookeeper for event streaming
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
     environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - e-doctor-net
 
-volumes:
-    mongo_data:
-#  apisix:
-#    image: apache/apisix:3.11.0-debian
-#    restart: always
-#    volumes:
-#      - ./conf/apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
-#    depends_on:
-#      - etcd
-#    ports:
-#      - "9180:9180/tcp"
-#      - "9080:9080/tcp"
-#      - "9443:9443/tcp"
-#    networks:
-#      apisix:
-#
-#  etcd:
-#    image: rancher/coreos-etcd:v3.4.15-arm64
-#    user: root
-#    restart: always
-#    volumes:
-#      - ./etcd_data:/etcd-data
-#    environment:
-#      ETCD_UNSUPPORTED_ARCH: "arm64"
-#      ETCD_ENABLE_V2: "true"
-#      ALLOW_NONE_AUTHENTICATION: "yes"
-#      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd:2379"
-#      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
-#      ETCD_DATA_DIR: "/etcd-data"
-#    ports:
-#      - "2379:2379/tcp"
-#    networks:
-#      apisix:
-#
-#  apisix-dashboard:
-#    image: apache/apisix-dashboard:3.0.1-alpine  # Dashboard’un güncel bir sürümü
-#    restart: always
-#    depends_on:
-#      - apisix
-#      - etcd
-#    volumes:
-#      - ./conf/dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
-#    ports:
-#      - "9000:9000/tcp"  # Dashboard’a erişim portu
-#    networks:
-#      - apisix
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - e-doctor-net
 
-#networks:
-#  apisix:
-#    driver: bridge
+  # ==================== MICRO SERVICES ====================
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: auth-service
+    depends_on:
+      - postgres-auth
+      - kafka
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-auth:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: auth_user
+      SPRING_DATASOURCE_PASSWORD: auth_pass
+      SPRING_REDIS_HOST: redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_MONGODB_URI: mongodb://mongo-infra:27017/system_setting
+    ports:
+      - "8085:8085"
+    networks:
+      - e-doctor-net
+
+  otp-service:
+    build:
+      context: ./otp-service
+    container_name: otp-service
+    depends_on:
+      - postgres-otp
+      - kafka
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-otp:5432/otp_db
+      SPRING_DATASOURCE_USERNAME: otp_user
+      SPRING_DATASOURCE_PASSWORD: otp_pass
+      SPRING_REDIS_HOST: redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8081:8081"
+    networks:
+      - e-doctor-net
+
+  notification-service:
+    build:
+      context: ./notification-service
+    container_name: notification-service
+    depends_on:
+      - postgres-notification
+      - kafka
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-notification:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: notification_user
+      SPRING_DATASOURCE_PASSWORD: notification_pass
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: your-email@gmail.com
+      SPRING_MAIL_PASSWORD: your-app-password
+    ports:
+      - "8082:8082"
+    networks:
+      - e-doctor-net
+
+  reservation-service:
+    build:
+      context: ./reservation-service
+    container_name: reservation-service
+    depends_on:
+      - postgres-reservation
+      - kafka
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-reservation:5432/reservation_db
+      SPRING_DATASOURCE_USERNAME: reservation_user
+      SPRING_DATASOURCE_PASSWORD: reservation_pass
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8086:8086"
+    networks:
+      - e-doctor-net
+
+  storage-service:
+    build:
+      context: ./storage-service
+    container_name: storage-service
+    depends_on:
+      - postgres-storage
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-storage:5432/storage_db
+      SPRING_DATASOURCE_USERNAME: storage_user
+      SPRING_DATASOURCE_PASSWORD: storage_pass
+    ports:
+      - "8084:8084"
+    networks:
+      - e-doctor-net
+
+  infrastructure-service:
+    build:
+      context: ./infrastructure-service
+    container_name: infrastructure-service
+    depends_on:
+      - mongodb
+      - kafka
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo-infra:27017/system_setting
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8087:8087"
+    networks:
+      - e-doctor-net
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - auth-service
+      - otp-service
+      - notification-service
+      - reservation-service
+      - storage-service
+      - infrastructure-service
+    ports:
+      - "8080:8080"
+    networks:
+      - e-doctor-net
+
+# ==================== NETWORK ====================
+networks:
+  e-doctor-net:
+    driver: bridge
