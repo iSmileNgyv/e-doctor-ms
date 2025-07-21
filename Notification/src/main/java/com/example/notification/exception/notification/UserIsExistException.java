@@ -9,6 +9,6 @@ public class UserIsExistException extends BaseException {
     }
 
     public UserIsExistException() {
-        super("User is exist", HttpStatus.CONFLICT.value());
+        this("User already exists.");
     }
 }
